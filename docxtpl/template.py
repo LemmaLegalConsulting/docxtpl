@@ -38,6 +38,7 @@ class DocxTemplate(object):
         self.template_file = template_file
         self.reset_replacements()
         self.docx = None
+        self.subdoc_composer = None
         self.is_rendered = False
         self.is_saved = False
 
@@ -60,6 +61,12 @@ class DocxTemplate(object):
         # Be careful : pretty_print MUST be set to False, otherwise patch_xml()
         # won't work properly
         return etree.tostring(xml, encoding='unicode', pretty_print=False)
+
+    def set_subdoc_composer(self, subdoc_composer):
+        self.subdoc_composer = subdoc_composer
+
+    def get_subdoc_composer(self): 
+        return self.subdoc_composer
 
     def get_docx(self):
         self.init_docx()
@@ -334,6 +341,7 @@ class DocxTemplate(object):
 
         # fix docPr ID's
         self.fix_docpr_ids(tree)
+        self.fix_bookmarks(tree)
 
         # Replace body xml tree
         self.map_tree(tree)
@@ -446,6 +454,17 @@ class DocxTemplate(object):
         for elt in tree.xpath('//wp:docPr', namespaces=docx.oxml.ns.nsmap):
             self.docx_ids_index += 1
             elt.attrib['id'] = str(self.docx_ids_index)
+    
+    def fix_bookmarks(self, tree):
+        start_index = 0 
+        index = start_index
+        for elt in tree.xpath('.//w:bookmarkStart', namespaces=docx.oxml.ns.nsmap):
+            elt.attrib['{' + docx.oxml.ns.nsmap["w"] + '}id'] = str(index)
+            index += 1
+        index = start_index
+        for elt in tree.xpath('.//w:bookmarkEnd', namespaces=docx.oxml.ns.nsmap):
+            elt.attrib['{' + docx.oxml.ns.nsmap["w"] + '}id'] = str(index)
+            index += 1
 
     def new_subdoc(self, docpath=None):
         self.init_docx()

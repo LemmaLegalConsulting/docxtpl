@@ -72,8 +72,9 @@ class Subdoc(object):
         self.docx = tpl.get_docx()
         self.subdocx = Document(docpath)
         if docpath:
-            compose = SubdocComposer(self.docx)
-            compose.attach_parts(self.subdocx)
+            if tpl.get_subdoc_composer() is None:
+                tpl.set_subdoc_composer(SubdocComposer(self.docx))
+            tpl.get_subdoc_composer().attach_parts(self.subdocx)
         else:
             self.subdocx._part = self.docx._part
 
